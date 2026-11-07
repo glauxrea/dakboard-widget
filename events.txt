@@ -1,0 +1,22 @@
+# ============================================================
+#  YOUR COUNTDOWN EVENTS  —  one event per line
+#  Format:   Name | When | emoji      (the emoji is optional)
+#
+#  "When" can be any of these:
+#     every Tuesday           -> repeats every week (use any weekday)
+#     yearly April 3          -> repeats every year
+#     November 26, 2026       -> a one-time date
+#                                (2026-11-26 or 11/26/2026 also work)
+#
+#  Lines starting with #  are ignored (notes / turned-off events).
+#  Delete a line to remove that event. Save/commit and the board updates.
+# ============================================================
+
+Trash & Recycling | every Tuesday | 🗑️
+Thanksgiving | November 26, 2026 | 🦃
+
+# ---- Examples: remove the # at the start to turn one on, or copy the pattern ----
+# Electric bill due | December 10, 2026 | 💡
+# Mom's Birthday | yearly April 3 | 🎂
+# Ski trip | January 18, 2027 | ⛷️
+# Anniversary | yearly 06-14 | ❤️
