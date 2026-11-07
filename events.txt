@@ -13,7 +13,7 @@
 # ============================================================
 
 Trash & Recycling | every Saturday | 🗑️
-Zion's Birthday | Nov 22 | 🎉
+Zion's Birthday | Nov 22, 2026 | 🎉
 Thanksgiving | November 26, 2026 | 🦃
 
 # ---- Examples: remove the # at the start to turn one on, or copy the pattern ----
