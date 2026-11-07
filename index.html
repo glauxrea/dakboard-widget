@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Countdown Strip</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;500;600&family=Barlow:wght@400;500;600&display=swap">
+<style>
+  /* ============================================================
+     DAKBOARD COUNTDOWN WIDGET
+     Edit ONLY the EVENTS list in the <script> at the bottom.
+     Layout: a vertical list of countdown rows that fills its block.
+     Single dark theme on purpose — it sits on the black DakBoard.
+     ============================================================ */
+  :root{
+    --bg:#0b0b0d;            /* set to "transparent" to blend into the board */
+    --fg:#ffffff;
+    --muted:#9aa3ad;
+    --row:#15161a;          /* row panel; use rgba(255,255,255,.04) if bg transparent */
+    --edge:#23252b;
+    --accent:#4ab8ff;       /* default accent / far-away */
+    --soon:#ffb020;         /* within a week */
+    --now:#ff5a4d;          /* today / tomorrow */
+    --f-num:"Oswald","Arial Narrow",sans-serif;
+    --f-txt:"Barlow",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0}
+  html,body{height:100%}
+  body{background:var(--bg);color:var(--fg);font-family:var(--f-txt);
+    padding:14px;display:flex;flex-direction:column;gap:12px;
+    -webkit-font-smoothing:antialiased}
+  .head{display:flex;align-items:baseline;justify-content:space-between;
+    padding:0 4px 2px;border-bottom:1px solid var(--edge)}
+  .head h1{font-family:var(--f-num);font-weight:500;letter-spacing:.14em;
+    text-transform:uppercase;font-size:clamp(15px,2.4vw,20px);color:var(--fg)}
+  .head .today{font-family:var(--f-txt);font-size:13px;color:var(--muted);font-weight:500}
+  .list{display:flex;flex-direction:column;gap:8px;overflow:hidden}
+  .evt{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;
+    background:var(--row);border:1px solid var(--edge);border-left:4px solid var(--accent);
+    border-radius:12px;padding:10px 16px}
+  .evt.soon{border-left-color:var(--soon)}
+  .evt.now{border-left-color:var(--now)}
+  .count{display:flex;flex-direction:column;align-items:center;min-width:58px;line-height:1}
+  .count .n{font-family:var(--f-num);font-weight:600;font-size:clamp(28px,5vw,42px);
+    font-variant-numeric:tabular-nums}
+  .count .u{font-family:var(--f-txt);font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);margin-top:2px}
+  .evt.now .count .n{color:var(--now)}
+  .evt.soon .count .n{color:var(--soon)}
+  .meta{min-width:0}
+  .meta .title{font-size:clamp(15px,2.6vw,19px);font-weight:600;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .meta .when{font-size:13px;color:var(--muted);margin-top:2px}
+  .emoji{font-size:clamp(20px,3.5vw,28px)}
+  .empty{color:var(--muted);text-align:center;padding:24px;font-size:14px}
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1 id="heading">Coming Up</h1>
+    <span class="today" id="today"></span>
+  </div>
+  <div class="list" id="list"><div class="empty">Loading…</div></div>
+
+<script>
+/* ============================================================
+   EDIT YOUR EVENTS HERE
+   Each event is one of:
+     • One-off:  { title:'Trip to Tahoe', date:'2026-12-20', emoji:'✈️' }
+     • Yearly:   { title:"Mom's Birthday", yearly:'03-14', emoji:'🎂' }   (MM-DD, repeats every year)
+     • Weekly:   { title:'Trash & Recycling', weekday:2, emoji:'🗑️' }     (0=Sun 1=Mon 2=Tue … 6=Sat)
+   Examples below are placeholders — swap them for your own.
+   ============================================================ */
+var EVENTS = [
+  { title:'Trash & Recycling', weekday:2, emoji:'🗑️' },            // every Tuesday
+  { title:'Thanksgiving',      date:'2026-11-26', emoji:'🦃' },
+  { title:'Electric bill due', date:'2026-11-15', emoji:'💡' },     // EXAMPLE — edit me
+  { title:"Someone's Birthday", yearly:'12-03', emoji:'🎂' },       // EXAMPLE — edit me
+  { title:'Winter trip',       date:'2026-12-20', emoji:'🏔️' }      // EXAMPLE — edit me
+];
+var HEADING = 'Coming Up';   // title shown at the top
+var MAX_ROWS = 6;            // how many to show at once
+
+// ---------- engine (no need to edit) ----------
+function startOfDay(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function nextDate(ev, today){
+  if(ev.date){ var p=ev.date.split('-'); return new Date(+p[0], +p[1]-1, +p[2]); }
+  if(ev.yearly){ var q=ev.yearly.split('-'); var m=+q[0]-1, day=+q[1];
+    var y=today.getFullYear(); var d=new Date(y,m,day);
+    if(d<today) d=new Date(y+1,m,day); return d; }
+  if(typeof ev.weekday==='number'){ var diff=(ev.weekday - today.getDay()+7)%7;
+    return new Date(today.getFullYear(), today.getMonth(), today.getDate()+diff); }
+  return null;
+}
+function label(days){
+  if(days<=0) return {n:'TODAY', u:'', cls:'now', solo:true};
+  if(days===1) return {n:'1', u:'day', cls:'now'};
+  if(days<=7)  return {n:String(days), u:'days', cls:'soon'};
+  return {n:String(days), u:'days', cls:''};
+}
+var WD=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function render(){
+  var now=new Date(), today=startOfDay(now);
+  document.getElementById('heading').textContent = HEADING;
+  document.getElementById('today').textContent =
+    WD[now.getDay()]+', '+MO[now.getMonth()]+' '+now.getDate();
+
+  var rows=EVENTS.map(function(ev){
+    var d=nextDate(ev, today); if(!d) return null;
+    var days=Math.round((startOfDay(d)-today)/86400000);
+    return {ev:ev, d:d, days:days};
+  }).filter(Boolean).sort(function(a,b){return a.days-b.days;}).slice(0, MAX_ROWS);
+
+  var list=document.getElementById('list');
+  if(!rows.length){ list.innerHTML='<div class="empty">No events — add some in the file.</div>'; return; }
+  list.innerHTML='';
+  rows.forEach(function(r){
+    var L=label(r.days);
+    var el=document.createElement('div');
+    el.className='evt'+(L.cls?(' '+L.cls):'');
+    var whenTxt = (r.days<=0?'Today':'')
+      || (r.days===1?'Tomorrow · '+WD[r.d.getDay()]:'')
+      || (WD[r.d.getDay()]+', '+MO[r.d.getMonth()]+' '+r.d.getDate());
+    el.innerHTML =
+      '<div class="count"><span class="n">'+L.n+'</span>'+(L.u?'<span class="u">'+L.u+'</span>':'')+'</div>'+
+      '<div class="meta"><div class="title">'+r.ev.title+'</div><div class="when">'+whenTxt+'</div></div>'+
+      '<div class="emoji">'+(r.ev.emoji||'')+'</div>';
+    list.appendChild(el);
+  });
+}
+render();
+// recompute at the next midnight, then every 24h, and hourly as a safety net
+setInterval(render, 3600*1000);
+(function scheduleMidnight(){
+  var n=new Date(), ms=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1,0,0,5)-n;
+  setTimeout(function(){ render(); setInterval(render, 86400*1000); }, ms);
+})();
+</script>
+</body>
+</html>
